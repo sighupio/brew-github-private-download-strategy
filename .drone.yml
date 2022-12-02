@@ -1,0 +1,94 @@
+---
+
+# Copyright (c) 2017-present SIGHUP s.r.l All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+kind: pipeline
+type: docker
+name: qa
+
+steps:
+  - name: git crypt unlock
+    image: quay.io/sighup/git:2.35.1
+    commands:
+      - echo $GPG_KEY | base64 -d > /tmp/droneci_private_key
+      - git-crypt unlock /tmp/droneci_private_key
+    environment:
+      GPG_KEY:
+        from_secret: GPG_KEY
+
+  - name: file lint
+    image: cytopia/file-lint:0.4
+    commands:
+      - apk update
+      - apk add make
+      - make file-lint
+    depends_on:
+      - git crypt unlock
+
+  - name: yaml lint
+    image: cytopia/yamllint:1.26
+    commands:
+      - apk update
+      - apk add make
+      - make yaml-lint
+    depends_on:
+      - git crypt unlock
+
+  - name: markdown lint
+    image: markdownlint/markdownlint:0.11.0
+    commands:
+      - make markdown-lint
+    depends_on:
+      - git crypt unlock
+
+  - name: gem build
+    image: ruby:3.1.3-alpine3.17
+    commands:
+      - gem build brew-github-private-download-strategy.gemspec
+
+  - name: gem install
+    image: ruby:3.1.3-alpine3.17
+    depends_on:
+      - gem build
+    commands:
+      - find . -name "brew-github-private-download-strategy-*.gem" -exec gem install {} \;
+
+platform:
+  os: linux
+  arch: amd64
+
+trigger:
+  event:
+    - push
+
+---
+kind: pipeline
+type: docker
+name: release
+
+steps:
+  - name: gem build
+    image: ruby:3.1.3-alpine3.17
+    commands:
+      - gem build brew-github-private-download-strategy.gemspec
+
+  - name: gem push
+    image: ruby:3.1.3-alpine3.17
+    commands:
+      - gem signin --key ${RUBYGEMS_API_KEY} --host https://rubygems.org
+      - find . -name "brew-github-private-download-strategy-*.gem" -exec gem push {} \;
+    environment:
+      RUBYGEMS_API_KEY:
+        from_secret: RUBYGEMS_API_KEY
+
+platform:
+  os: linux
+  arch: amd64
+
+trigger:
+  event:
+    - tag
+  branch:
+    - main
