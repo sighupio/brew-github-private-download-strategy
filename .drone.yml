@@ -24,11 +24,9 @@ steps:
       - make yaml-lint
 
   - name: markdown lint
-    image: markdownlint/markdownlint:0.11.0
+    image: markdownlint/markdownlint:0.12.0
     commands:
-      - apk update
-      - apk add make
-      - make markdown-lint
+      - find . -name "*.md" -exec mdl -c .rules/.mdlrc {} \;
 
   - name: makefile lint
     image: cytopia/checkmake:0.1.0
