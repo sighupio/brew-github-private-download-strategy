@@ -7,5 +7,5 @@ Thanks to this Gem and a bit of configuration in your homebrew formula, you will
 
 ## Release a new version
 
-- Update the gemspec
-- Create a corresponding tag on Github
+- Bump the version in the `brew-github-private-download-strategy.gemspec` file
+- Publish a corresponding tag on Github

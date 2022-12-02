@@ -9,23 +9,12 @@ type: docker
 name: qa
 
 steps:
-  - name: git crypt unlock
-    image: quay.io/sighup/git:2.35.1
-    commands:
-      - echo $GPG_KEY | base64 -d > /tmp/droneci_private_key
-      - git-crypt unlock /tmp/droneci_private_key
-    environment:
-      GPG_KEY:
-        from_secret: GPG_KEY
-
   - name: file lint
     image: cytopia/file-lint:0.4
     commands:
       - apk update
       - apk add make
       - make file-lint
-    depends_on:
-      - git crypt unlock
 
   - name: yaml lint
     image: cytopia/yamllint:1.26
@@ -33,15 +22,20 @@ steps:
       - apk update
       - apk add make
       - make yaml-lint
-    depends_on:
-      - git crypt unlock
 
   - name: markdown lint
     image: markdownlint/markdownlint:0.11.0
     commands:
+      - apk update
+      - apk add make
       - make markdown-lint
-    depends_on:
-      - git crypt unlock
+
+  - name: makefile lint
+    image: cytopia/checkmake:0.1.0
+    commands:
+      - apk update
+      - apk add make
+      - make makefile-lint
 
   - name: gem build
     image: ruby:3.1.3-alpine3.17
