@@ -1,5 +1,7 @@
 # Homebrew Private Github Download Strategy
 
+[Page on Rubygems.org](https://rubygems.org/gems/brew-github-private-download-strategy)
+
 Use this Gem to create homebrew packages that allow to download private releases from Github.
 
 Whenever you want to create a homebrew package for a private repository, you have to create a custom download strategy
